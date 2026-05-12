@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::paint::Paint;
 use crate::playback::{AnimationPlayer, NodePose};
 use crate::renderer::Renderer;
-use crate::schema::{Artboard, Node};
+use crate::schema::Artboard;
 use nalgebra::Matrix3;
 
 /// High-level handle for driving a single artboard with one active animation.
@@ -45,25 +45,27 @@ impl Scene {
             bg,
         );
 
-        // Collect animation poses (or empty map when no player)
         let poses: HashMap<Uuid, NodePose> = self
             .player
             .as_ref()
             .map(|p| p.evaluate())
             .unwrap_or_default();
 
-        // Compute world matrices respecting parent hierarchy
         let world = compute_world_transforms_live(&self.artboard.nodes, &poses);
 
-        // Draw each visible node that has a shape
+        // Build a map of which nodes clip their children (node_id → clip world matrix)
+        let clip_nodes: HashMap<Uuid, Matrix3<f32>> = self
+            .artboard
+            .nodes
+            .iter()
+            .filter(|n| n.clip_children && n.shape.is_some())
+            .map(|n| (n.id, world.get(&n.id).copied().unwrap_or(Matrix3::identity())))
+            .collect();
+
         for node in &self.artboard.nodes {
             if !node.visible {
                 continue;
             }
-            let shape = match &node.shape {
-                Some(s) => s,
-                None => continue,
-            };
 
             let world_mat = world.get(&node.id).copied().unwrap_or(Matrix3::identity());
             let opacity = poses
@@ -71,18 +73,44 @@ impl Scene {
                 .and_then(|p| p.opacity)
                 .unwrap_or(node.opacity);
 
-            let path = shape.geometry.to_path();
+            // Apply parent clip if the direct parent clips its children
+            let parent_clips = node
+                .parent_id
+                .and_then(|pid| {
+                    self.artboard.nodes.iter().find(|n| n.id == pid)
+                })
+                .map(|p| p.clip_children)
+                .unwrap_or(false);
 
-            // Apply animated paint overrides
-            let paint = apply_paint_pose(&shape.paint, poses.get(&node.id));
+            if parent_clips {
+                if let Some(parent_id) = node.parent_id {
+                    if let Some(parent_node) = self.artboard.nodes.iter().find(|n| n.id == parent_id) {
+                        if let Some(shape) = &parent_node.shape {
+                            let clip_mat = clip_nodes
+                                .get(&parent_id)
+                                .copied()
+                                .unwrap_or(Matrix3::identity());
+                            renderer.push_clip(&shape.geometry.to_path(), &clip_mat);
+                        }
+                    }
+                }
+            }
 
-            renderer.draw_path(&path, &paint, &world_mat, opacity);
+            if let Some(shape) = &node.shape {
+                let path = shape.geometry.to_path();
+                let paint = apply_paint_pose(&shape.paint, poses.get(&node.id));
+                renderer.draw_path(&path, &paint, &world_mat, opacity, &node.effects);
+            }
+
+            if parent_clips {
+                renderer.pop_clip();
+            }
         }
     }
 }
 
 fn compute_world_transforms_live(
-    nodes: &[Node],
+    nodes: &[crate::schema::Node],
     poses: &HashMap<Uuid, NodePose>,
 ) -> HashMap<Uuid, Matrix3<f32>> {
     let mut world: HashMap<Uuid, Matrix3<f32>> = HashMap::new();
@@ -113,7 +141,6 @@ fn apply_paint_pose(base: &Paint, pose: Option<&NodePose>) -> Paint {
 
     let mut paint = base.clone();
 
-    // Overlay animated RGBA on solid fill if all channels are provided via tracks
     if let crate::paint::Fill::Solid(ref mut color) = paint.fill {
         if let Some(r) = pose.fill_color[0] { color.r = r; }
         if let Some(g) = pose.fill_color[1] { color.g = g; }

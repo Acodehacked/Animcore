@@ -1,3 +1,4 @@
+use crate::effects::Effect;
 use crate::paint::{BlendMode, Paint};
 use crate::path::{AnimPath, PathVerb};
 use nalgebra::Matrix3;
@@ -7,15 +8,29 @@ pub mod skia;
 /// Minimal interface every renderer must implement.
 pub trait Renderer {
     fn begin_frame(&mut self, width: u32, height: u32, background: [u8; 4]);
-    fn draw_path(&mut self, path: &AnimPath, paint: &Paint, transform: &Matrix3<f32>, opacity: f32);
+
+    /// Draw a path with optional per-layer effects (shadows, glow).
+    fn draw_path(
+        &mut self,
+        path: &AnimPath,
+        paint: &Paint,
+        transform: &Matrix3<f32>,
+        opacity: f32,
+        effects: &[Effect],
+    );
+
+    /// Push a clipping region. All subsequent draw_path calls are clipped to this path.
+    fn push_clip(&mut self, path: &AnimPath, transform: &Matrix3<f32>);
+
+    /// Pop the most recent clipping region.
+    fn pop_clip(&mut self);
+
     /// Returns raw RGBA8 pixels, row-major.
     fn end_frame(&mut self) -> Vec<u8>;
 }
 
 // ── Shared helpers ─────────────────────────────────────────────────────────
 
-/// Flatten transform + path into a concrete list of draw calls for backends
-/// that need a simple command stream.
 pub enum DrawCmd {
     MoveTo(f32, f32),
     LineTo(f32, f32),
@@ -24,7 +39,7 @@ pub enum DrawCmd {
     Close,
 }
 
-/// Transform all points in a path by a matrix and return draw commands.
+/// Transform all points in a path by a matrix, returning draw commands.
 pub fn transform_path(path: &AnimPath, m: &Matrix3<f32>) -> Vec<DrawCmd> {
     let mut cmds = Vec::with_capacity(path.verbs.len());
     let mut pi = 0usize;

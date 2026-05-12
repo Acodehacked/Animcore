@@ -1,17 +1,17 @@
-/// animcore is the animation engine 
-/// it is not a UI-framework, it does not know anything about pixels, windows, 
-/// input, svg or html
-/// the core concepts are nodes, shapes, transforms, paths and animations
+/// animcore — Rive-equivalent animation engine in Rust
 /// built by Abin Antony Kattady
 
+mod effects;
 mod paint;
 mod path;
 mod playback;
 mod renderer;
 mod scene;
 mod schema;
+mod svg;
 mod transform;
 
+use effects::Effect;
 use paint::{Color, Paint};
 use renderer::{skia::SkiaRenderer, Renderer};
 use scene::Scene;
@@ -20,9 +20,8 @@ use transform::Transform;
 use uuid::Uuid;
 
 fn main() {
-    // Build a simple artboard: a red rect that slides right, then fades out
+    // ── Build artboard ────────────────────────────────────────────────────
     let rect_id = Uuid::new_v4();
-
     let mut rect_node = Node::new("RedRect");
     rect_node.id = rect_id;
     rect_node.transform = Transform::translation(20.0, 80.0);
@@ -30,6 +29,13 @@ fn main() {
         geometry: Geometry::Rect { width: 120.0, height: 80.0, corner_radius: 12.0 },
         paint: Paint::filled(Color::from_hex(0xFF4444)),
     });
+    // Drop shadow on the rect
+    rect_node.effects = vec![Effect::DropShadow {
+        offset_x: 6.0,
+        offset_y: 8.0,
+        blur_radius: 16.0,
+        color: Color::rgba(0.0, 0.0, 0.0, 0.45),
+    }];
 
     let circle_id = Uuid::new_v4();
     let mut circle_node = Node::new("BlueCircle");
@@ -39,6 +45,11 @@ fn main() {
         geometry: Geometry::Ellipse { radius_x: 60.0, radius_y: 60.0 },
         paint: Paint::filled(Color::from_hex(0x4488FF)),
     });
+    circle_node.effects = vec![Effect::OuterGlow {
+        blur_radius: 20.0,
+        color: Color::rgba(0.27, 0.53, 1.0, 0.6),
+        opacity: 0.8,
+    }];
 
     let slide_anim = Animation {
         id: Uuid::new_v4(),
@@ -87,22 +98,28 @@ fn main() {
         animations: vec![slide_anim],
     };
 
+    // ── SVG round-trip demo ───────────────────────────────────────────────
+    let exported = svg::export::to_svg_str(&artboard);
+    std::fs::write("demo_export.svg", &exported).unwrap();
+    println!("SVG export: {} bytes → demo_export.svg", exported.len());
+
+    let reimported = svg::import::from_svg_str(&exported).expect("re-import failed");
+    println!("SVG re-import: {} nodes", reimported.nodes.len());
+
+    // ── Render sample frames ──────────────────────────────────────────────
     let mut scene = Scene::new(artboard);
     scene.play("slide");
 
-    // Render 3 sample frames and save as raw RGBA PNG-like blobs
-    let mut renderer = SkiaRenderer::new();
-    let frames = [0.0f32, 0.5, 1.0];
+    let mut rend = SkiaRenderer::new();
 
-    for t in &frames {
-        // rewind
+    for t in &[0.0f32, 0.5, 1.0] {
         if let Some(p) = &mut scene.player { p.time = *t; }
-        scene.render(&mut renderer);
-        let pixels = renderer.end_frame();
-        let filename = format!("frame_{:.1}s.raw", t);
-        std::fs::write(&filename, &pixels).unwrap();
-        println!("wrote {} ({} bytes)", filename, pixels.len());
+        scene.render(&mut rend);
+        let pixels = rend.end_frame();
+        let fname = format!("frame_{:.1}s.raw", t);
+        std::fs::write(&fname, &pixels).unwrap();
+        println!("wrote {} ({} bytes, {}×{}px)", fname, pixels.len(), 480, 270);
     }
 
-    println!("Phase 1 complete — paint, paths, transforms, CPU renderer all wired up.");
+    println!("\nPhase 2 complete — effects, clip masks, SVG import/export all live.");
 }

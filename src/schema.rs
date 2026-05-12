@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::effects::Effect;
 use crate::paint::Paint;
 use crate::path::AnimPath;
 use crate::transform::Transform;
@@ -38,7 +39,9 @@ pub struct Node {
     pub opacity: f32,
     pub visible: bool,
     pub shape: Option<ShapeData>,
+    /// When true, this node's shape clips all of its direct children.
     pub clip_children: bool,
+    pub effects: Vec<Effect>,
 }
 
 impl Node {
@@ -52,6 +55,7 @@ impl Node {
             visible: true,
             shape: None,
             clip_children: false,
+            effects: vec![],
         }
     }
 }

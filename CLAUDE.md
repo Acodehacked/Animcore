@@ -143,14 +143,16 @@ Blend states support 1D (single float axis) and 2D (two-float blend space).
 - [x] `Scene` type: ties artboard + player + renderer
 - [x] 14 unit tests passing (path, playback, transform, renderer)
 
-### Phase 2 — Visual Richness
-- [ ] Linear and radial gradients
-- [ ] Stroke properties (cap, join, dash)
-- [ ] Clipping masks
-- [ ] Blend modes (multiply, screen, overlay, …)
-- [ ] Drop shadows / inner glow as effects
-- [ ] SVG import (shapes + paths → AnimCore nodes)
-- [ ] SVG export (current frame or full scene)
+### Phase 2 — Visual Richness ✅ COMPLETE
+- [x] Linear and radial gradients (Phase 1 carry-over)
+- [x] Stroke properties: cap, join, dash, miter (Phase 1 carry-over)
+- [x] Blend modes: all 12 standard modes
+- [x] Drop shadows — Gaussian blur (3× box blur) composited before fill
+- [x] Outer glow — same shadow engine, zero offset
+- [x] InnerGlow stub (Phase 3 full implementation)
+- [x] Clipping masks — `push_clip` / `pop_clip` on Renderer trait; `clip_children` Node flag
+- [x] SVG import — rect, circle, ellipse, path, polygon, polyline, line, nested `<g>` groups; hex/rgb/named colors; transform attribute (translate/scale/rotate/skewX/skewY/matrix)
+- [x] SVG export — all geometry types, solid/gradient fills, strokes, opacity, linearGradient/radialGradient `<defs>`
 
 ### Phase 3 — Advanced Animation
 - [ ] Multi-animation artboard (multiple named `Animation` objects)
