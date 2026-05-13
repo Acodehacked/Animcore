@@ -52,6 +52,7 @@ pub fn from_svg_str(svg: &str) -> Result<Artboard, SvgImportError> {
         background: Color::WHITE,
         nodes,
         animations: vec![],
+        constraints: vec![],
     })
 }
 

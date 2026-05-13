@@ -138,9 +138,53 @@ impl Renderer for SkiaRenderer {
         }
     }
 
+    fn draw_pixels(
+        &mut self,
+        pixels: &[u8],
+        width: u32,
+        height: u32,
+        transform: &Matrix3<f32>,
+        opacity: f32,
+    ) {
+        let pm = match &mut self.pixmap {
+            Some(p) => p,
+            None => return,
+        };
+        if pixels.len() != (width * height * 4) as usize {
+            return;
+        }
+        let mut src = match Pixmap::new(width, height) {
+            Some(p) => p,
+            None => return,
+        };
+        src.data_mut().copy_from_slice(pixels);
+
+        let sk_t = SkTransform::from_row(
+            transform[(0, 0)], transform[(1, 0)],
+            transform[(0, 1)], transform[(1, 1)],
+            transform[(0, 2)], transform[(1, 2)],
+        );
+
+        let mut pp = PixmapPaint::default();
+        pp.opacity = opacity.clamp(0.0, 1.0);
+
+        pm.draw_pixmap(0, 0, src.as_ref(), &pp, sk_t, self.clip_stack.last());
+    }
+
     fn end_frame(&mut self) -> Vec<u8> {
         match &self.pixmap {
             Some(pm) => pm.data().to_vec(),
+            None => vec![],
+        }
+    }
+}
+
+impl SkiaRenderer {
+    /// Encode the current frame as a PNG byte vector.
+    /// Returns an empty vec if `begin_frame` has not been called.
+    pub fn encode_png(&self) -> Vec<u8> {
+        match &self.pixmap {
+            Some(pm) => pm.encode_png().unwrap_or_default(),
             None => vec![],
         }
     }

@@ -1,7 +1,6 @@
 use std::fmt::Write;
 
 use nalgebra::Matrix3;
-use uuid::Uuid;
 
 use crate::paint::{Fill, Gradient, Paint};
 use crate::path::{AnimPath, PathVerb};
@@ -106,6 +105,9 @@ fn write_node(
                 r#"<path{id} d="{d}" transform="{t}"{fill}{stroke}{opacity}/>"#,
                 id = id, d = d, t = t, fill = fill, stroke = stroke, opacity = opacity
             );
+        }
+        Geometry::NestedArtboard(_) => {
+            // SVG has no equivalent; nested artboards are skipped on export.
         }
     }
 }
@@ -267,6 +269,7 @@ mod tests {
     use crate::paint::{Color, Paint};
     use crate::schema::{Artboard, Geometry, Node, ShapeData};
     use crate::transform::Transform;
+    use uuid::Uuid;
 
     fn simple_artboard() -> Artboard {
         let mut node = Node::new("rect1");
@@ -283,6 +286,7 @@ mod tests {
             background: Color::WHITE,
             nodes: vec![node],
             animations: vec![],
+            constraints: vec![],
         }
     }
 

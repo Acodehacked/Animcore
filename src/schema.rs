@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::constraints::Constraint;
 use crate::effects::Effect;
 use crate::paint::Paint;
 use crate::path::AnimPath;
@@ -26,6 +27,8 @@ pub struct Artboard {
     /// Nodes ordered so parents always precede children.
     pub nodes: Vec<Node>,
     pub animations: Vec<Animation>,
+    /// Solved each frame after animation evaluation.
+    pub constraints: Vec<Constraint>,
 }
 
 // ── Node ─────────────────────────────────────────────────────────────────────
@@ -76,10 +79,12 @@ pub enum Geometry {
     Ellipse { radius_x: f32, radius_y: f32 },
     /// Arbitrary cubic-bezier path.
     Path(AnimPath),
+    /// A fully self-contained artboard rendered as a child node.
+    NestedArtboard(Box<Artboard>),
 }
 
 impl Geometry {
-    /// Convert any geometry variant to an AnimPath for rendering.
+    /// Convert any geometry variant to an AnimPath for rendering / hit-testing.
     pub fn to_path(&self) -> AnimPath {
         match self {
             Geometry::Rect { width, height, corner_radius } => {
@@ -93,6 +98,7 @@ impl Geometry {
                 AnimPath::ellipse(0.0, 0.0, *radius_x, *radius_y)
             }
             Geometry::Path(p) => p.clone(),
+            Geometry::NestedArtboard(ab) => AnimPath::rect(0.0, 0.0, ab.width, ab.height),
         }
     }
 }

@@ -4,6 +4,7 @@ use crate::path::{AnimPath, PathVerb};
 use nalgebra::Matrix3;
 
 pub mod skia;
+pub mod vello;
 
 /// Minimal interface every renderer must implement.
 pub trait Renderer {
@@ -24,6 +25,16 @@ pub trait Renderer {
 
     /// Pop the most recent clipping region.
     fn pop_clip(&mut self);
+
+    /// Composite raw RGBA8 pixels (e.g. a rendered nested artboard) at the given transform.
+    fn draw_pixels(
+        &mut self,
+        pixels: &[u8],
+        width: u32,
+        height: u32,
+        transform: &Matrix3<f32>,
+        opacity: f32,
+    );
 
     /// Returns raw RGBA8 pixels, row-major.
     fn end_frame(&mut self) -> Vec<u8>;
