@@ -26,17 +26,26 @@ It's built as an open alternative to tools like [Rive](https://rive.app) — wit
 
 ## Current Status
 
-AnimCore is under active development. Core animation playback, rendering, and SVG support are complete. State machines and the visual editor are coming next.
+Phases 1–8 are complete. AnimCore has a fully working runtime, GPU and CPU renderers, binary file format, state machines, platform runtimes (Web, Flutter/iOS, Bevy), and a desktop editor. Active development is now on Phase 9 advanced features.
 
-| Area                  | Status         |
-| --------------------- | -------------- |
-| Animation playback    | ✅ Complete    |
-| Vector rendering      | ✅ Complete    |
-| SVG import / export   | ✅ Complete    |
-| State machines        | 🔧 In progress |
-| Binary file format    | 🔧 In progress |
-| Desktop editor        | 📅 Planned     |
-| Web / mobile runtimes | 📅 Planned     |
+| Area                          | Status         |
+| ----------------------------- | -------------- |
+| Animation playback            | ✅ Complete    |
+| Visual effects & blend modes  | ✅ Complete    |
+| SVG import / export           | ✅ Complete    |
+| Advanced animation (mixing, IK, constraints) | ✅ Complete |
+| State machines & blend trees  | ✅ Complete    |
+| Binary `.anim` file format    | ✅ Complete    |
+| GPU renderer (vello + wgpu)   | ✅ Complete    |
+| CPU renderer (tiny-skia)      | ✅ Complete    |
+| Web runtime (WASM)            | ✅ Complete    |
+| Flutter / iOS runtime (C FFI) | ✅ Complete    |
+| Bevy plugin                   | ✅ Complete    |
+| Desktop editor (egui)         | ✅ Complete    |
+| Skeleton rigging & mesh deform| 📅 Planned     |
+| Text nodes                    | 📅 Planned     |
+| Physics simulation            | 📅 Planned     |
+| Lottie import / GIF export    | 📅 Planned     |
 
 ---
 
