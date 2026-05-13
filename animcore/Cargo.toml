@@ -1,0 +1,39 @@
+[package]
+name = "animcore"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["skia-renderer", "svg"]
+skia-renderer = ["tiny-skia"]
+svg = ["roxmltree"]
+# GPU renderer: vello + wgpu. Build with: cargo build --features gpu
+gpu = ["vello", "wgpu", "pollster"]
+# WASM JS bindings (used by animcore-wasm crate)
+wasm = ["wasm-bindgen"]
+
+[dependencies]
+nalgebra   = "0.33"
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid       = { version = "1", features = ["v4", "serde"] }
+petgraph   = "0.6"
+postcard   = { version = "1", features = ["alloc"] }
+
+# CPU renderer
+tiny-skia = { version = "0.11", optional = true }
+
+# SVG I/O
+roxmltree = { version = "0.20", optional = true }
+
+# GPU renderer
+vello    = { version = "0.3", optional = true }
+wgpu     = { version = "0.20", optional = true }
+pollster = { version = "0.3", optional = true }
+
+# WASM
+wasm-bindgen = { version = "0.2", optional = true }
+
+[dev-dependencies]
+tiny-skia = "0.11"
+roxmltree = "0.20"

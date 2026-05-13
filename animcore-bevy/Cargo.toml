@@ -1,0 +1,17 @@
+[package]
+name = "animcore-bevy"
+version = "0.1.0"
+edition = "2021"
+description = "Bevy plugin for AnimCore — runtime animation playback inside a Bevy app"
+
+[dependencies]
+animcore = { path = "../animcore", features = ["skia-renderer"] }
+bevy = { version = "0.15", default-features = false, features = [
+    "bevy_app",
+    "bevy_ecs",
+    "bevy_time",
+    "bevy_asset",
+    "bevy_render",
+    "bevy_sprite",
+    "bevy_image",
+] }

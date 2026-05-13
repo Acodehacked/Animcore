@@ -1,1 +1,11 @@
-target/*
+target
+.claude/*
+CLAUDE.md
+animcore/target/*
+animcore/.idea
+animcore/.settings
+animcore-bevy/target
+animcore-editor/target
+animcore-wasm/target
+
+Cargo.lock

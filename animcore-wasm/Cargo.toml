@@ -1,0 +1,21 @@
+[package]
+name = "animcore-wasm"
+version = "0.1.0"
+edition = "2021"
+description = "WebAssembly (wasm-bindgen) JS bindings for AnimCore"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+
+[dependencies]
+animcore      = { path = "../animcore", features = ["skia-renderer", "svg"] }
+wasm-bindgen  = "0.2"
+js-sys        = "0.3"
+serde-wasm-bindgen = "0.6"
+serde         = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
